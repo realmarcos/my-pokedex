@@ -5,7 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pokemon, PokemonClient } from "pokenode-ts";
 import { useEffect, useState } from "react";
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import ContentLoader, { Circle, Rect } from "react-content-loader/native";
+import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 type TypeEffectiveness = {
   weaknesses: string[];
@@ -14,6 +15,7 @@ type TypeEffectiveness = {
 
 export default function DetailsScreen() {
   const router = useRouter();
+  const { width, height: screenHeight } = useWindowDimensions();
   const { pokemonId } = useLocalSearchParams<{ pokemonId: string }>();
   const [pokemon, setPokemon] = useState<Pokemon | null>(null);
   const [description, setDescription] = useState('');
@@ -51,7 +53,25 @@ export default function DetailsScreen() {
 
   const formatName = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
 
-  if (!pokemon) return (<Text>Carregando...</Text>)
+  if (!pokemon) return (
+    <SafeAreaView style={styles.container}>
+      <TouchableOpacity onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#fff" />
+      </TouchableOpacity>
+
+      <ContentLoader
+        backgroundColor="#1f1f1f"
+        foregroundColor="#9ca3af"
+        viewBox={`0 0 ${width} ${screenHeight}`}
+      >
+        <Circle cx={width / 2} cy={100} r={96} />
+        <Rect x="0" y={250} rx="5" ry="5" width={width} height={125} />
+        <Rect x="0" y={380} rx="5" ry="5" width={width} height={125} />
+        <Rect x="0" y={500} rx="5" ry="5" width={width} height={125} />
+      </ContentLoader>
+    </SafeAreaView>
+
+  )
 
   const height = pokemon.height / 10;
   const weight = pokemon.weight / 10;
@@ -68,11 +88,11 @@ export default function DetailsScreen() {
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>
+
             {formatName(pokemon.name)} #{String(pokemon.id).padStart(3, '0')}
           </Text>
           <View style={{ width: 24 }} />
         </View>
-
         <View style={styles.imageWrapper}>
           <Image
             source={{ uri: pokemon.sprites.other?.['official-artwork'].front_default || '' }}
@@ -87,7 +107,7 @@ export default function DetailsScreen() {
           <View style={styles.row}>
             <View style={styles.attribute}>
               <Text style={styles.label}>Altura</Text>
-              <Text style={styles.value}>{height} cm</Text>
+              <Text style={styles.value}>{height >= 1 ? `${height.toFixed(1)} m` : `${height * 100} cm`}</Text>
             </View>
             <View style={styles.attribute}>
               <Text style={styles.label}>Peso</Text>
@@ -109,7 +129,7 @@ export default function DetailsScreen() {
             <Text style={styles.label}>Tipo</Text>
             {types.map((type: string) => (
               <View key={type} style={[styles.badge, { backgroundColor: getTypeColor(type) }]}>
-                  <TypeIcon type={type} />
+                <TypeIcon type={type} />
                 <Text style={styles.badgeText}>{formatName(type)}</Text>
               </View>
             ))}
@@ -119,7 +139,7 @@ export default function DetailsScreen() {
         </View>
         <View style={styles.infoCard}>
           <PokemonStatsCard
-          type={pokemon.types[0].type.name}
+            type={pokemon.types[0].type.name}
             stats={pokemon.stats.map((s) => ({
               name: s.stat.name,
               value: s.base_stat,

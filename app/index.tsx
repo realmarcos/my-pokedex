@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
   Image,
-  FlatList,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Dimensions,
   SafeAreaView,
   ScrollView,
-  StatusBar
+  StatusBar,
+  useWindowDimensions
 } from 'react-native';
 import { PokemonClient } from 'pokenode-ts';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
+import ContentLoader, { Rect } from 'react-content-loader/native';
 const banner = require("../assets/images/banner.jpeg");
 // import pokemonLogo from "../assets/images/Pokemon-Logo-PNG.png";
 
@@ -24,19 +24,21 @@ type PokemonDetails = {
   types: string[];
 };
 
-const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen() {
-  const router = useRouter();
+  const { width } = useWindowDimensions();
   const [pokemonList, setPokemonList] = useState<PokemonDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const api = new PokemonClient();
+  const cardWidth = (width - 45) / 3; // Espaçamento entre os cards
+  const cardHeight = 154;
+  const gap = 5;
 
 
   useEffect(() => {
     const fetchPokemons = async () => {
       try {
-        const data = await api.listPokemons(0, 20);
+        const data = await api.listPokemons(0, 300);
         const promises = data.results.map(async (pokemon) => {
           const details = await api.getPokemonByName(pokemon.name);
           return {
@@ -63,25 +65,6 @@ export default function HomeScreen() {
     return value.toString().padStart(3, '0');
   }
 
-  const renderPokemon = ({ item }: { item: any }) => (
-    <Link style={styles.pokemonCard} href={{ pathname: "/details/[pokemonId]", params: { pokemonId: item.id } }} >
-
-      <View  key={item.id} accessible accessibilityLabel={`${item.number} ${item.name}`}>
-        <View style={styles.pokemonCardHeader}>
-          <Text style={styles.pokemonNumber}>#{formatPokemonNunber(item.id)}</Text>
-          <Text style={styles.pokemonName}>{item.name}</Text>
-        </View>
-        <View style={styles.pokemonCardContent}>
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={styles.pokemonImage}
-            accessibilityLabel={item.imageAlt}
-          />
-
-        </View>
-      </View>
-    </Link>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,15 +103,55 @@ export default function HomeScreen() {
           </View>
         </View>
         <Text style={styles.sectionTitle}>Todos os pokémons</Text>
-        <FlatList
-          data={pokemonList}
-          renderItem={renderPokemon}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={3}
-          columnWrapperStyle={styles.columnWrapper}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-        />
+        {loading ? (
+          <ContentLoader
+            backgroundColor="#1f1f1f"
+            foregroundColor="#9ca3af"
+          >
+            <View style={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+
+              {Array.from({ length: 3 }).map((_, rowIndex) =>
+                Array.from({ length: 3 }).map((_, colIndex) => {
+                  const x = colIndex * (cardWidth + gap);
+                  const y = rowIndex * (cardHeight + gap);
+                  return (
+                    <Rect
+                      key={`${rowIndex}-${colIndex}`}
+                      x={x}
+                      y={y}
+                      rx={10}
+                      ry={10}
+                      width={cardWidth}
+                      height={cardHeight}
+                    />
+                  );
+                })
+              )}
+            </View>
+
+          </ContentLoader>
+        ) : (
+          <View style={styles.pokemonContainer}>
+            {pokemonList.map((item) => (
+              <Link style={styles.pokemonCard} href={{ pathname: "/details/[pokemonId]", params: { pokemonId: item.id } }} key={item.id} >
+                <View key={item.id} accessible accessibilityLabel={`${item.name}`}>
+                  <View style={styles.pokemonCardHeader}>
+                    <Text style={styles.pokemonNumber}>#{formatPokemonNunber(item.id || 0)}</Text>
+                    <Text style={styles.pokemonName}>{item.name}</Text>
+                  </View>
+                  <View style={styles.pokemonCardContent}>
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.pokemonImage}
+                      accessibilityLabel={item.name}
+                    />
+
+                  </View>
+                </View>
+              </Link>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -232,12 +255,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
+  pokemonContainer: {
+    paddingBottom: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    backgroundColor: '#000'
+  },
   pokemonCard: {
     backgroundColor: '#1f1f1f',
     borderRadius: 8,
     padding: 8,
-    flex: 1,
-    marginHorizontal: 3,
+    width: '30%',
+    margin: 4,
   },
   pokemonNumber: {
     color: '#9ca3af',
