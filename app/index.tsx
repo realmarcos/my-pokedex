@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 import { PokemonClient } from 'pokenode-ts';
 import { Link } from 'expo-router';
 import ContentLoader, { Rect } from 'react-content-loader/native';
+import { useNetworkState } from 'expo-network';
 const banner = require("../assets/images/banner.jpeg");
 // import pokemonLogo from "../assets/images/Pokemon-Logo-PNG.png";
 
@@ -21,12 +22,12 @@ type PokemonDetails = {
   id: number;
   name: string;
   imageUrl: string;
-  types: string[];
+  types?: string[];
 };
-
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
+  const { isConnected } = useNetworkState();
   const [pokemonList, setPokemonList] = useState<PokemonDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const api = new PokemonClient();
@@ -38,18 +39,15 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchPokemons = async () => {
       try {
-        const data = await api.listPokemons(0, 300);
-        const promises = data.results.map(async (pokemon) => {
-          const details = await api.getPokemonByName(pokemon.name);
+        const data = await api.listPokemonSpecies(0, 33);
+        const results = data.results.map((pokemon, index) => {
           return {
-            id: details.id,
-            name: capitalize(details.name),
-            imageUrl: details.sprites.other?.['official-artwork'].front_default || '',
-            types: details.types.map((t) => t.type.name),
+            id: index + 1,
+            name: capitalize(pokemon.name),
+            imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${index + 1}.png`,
           };
         });
 
-        const results = await Promise.all(promises);
         setPokemonList(results);
       } catch (error) {
         console.error('Erro ao buscar Pokémon:', error);
@@ -58,8 +56,12 @@ export default function HomeScreen() {
       }
     };
 
-    fetchPokemons();
-  }, []);
+    if (!isConnected) {
+      return;
+    } else if (pokemonList.length === 0) {
+      fetchPokemons();
+    }
+  }, [isConnected]);
 
   const formatPokemonNunber = (value: number) => {
     return value.toString().padStart(3, '0');
@@ -132,24 +134,31 @@ export default function HomeScreen() {
           </ContentLoader>
         ) : (
           <View style={styles.pokemonContainer}>
-            {pokemonList.map((item) => (
-              <Link style={styles.pokemonCard} href={{ pathname: "/details/[pokemonId]", params: { pokemonId: item.id } }} key={item.id} >
-                <View key={item.id} accessible accessibilityLabel={`${item.name}`}>
-                  <View style={styles.pokemonCardHeader}>
-                    <Text style={styles.pokemonNumber}>#{formatPokemonNunber(item.id || 0)}</Text>
-                    <Text style={styles.pokemonName}>{item.name}</Text>
-                  </View>
-                  <View style={styles.pokemonCardContent}>
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.pokemonImage}
-                      accessibilityLabel={item.name}
-                    />
+            {(isConnected && pokemonList.length === 0) ? (
+              <Text style={styles.errorText}>Sem conexão com a internet</Text>
+            ) : (
+              <Fragment>
+                {pokemonList.map((item) => (
+                  <Link style={styles.pokemonCard} href={{ pathname: "/details/[pokemonId]", params: { pokemonId: item.id } }} key={item.id} >
+                    <View key={item.id} accessible accessibilityLabel={`${item.name}`}>
+                      <View style={styles.pokemonCardHeader}>
+                        <Text style={styles.pokemonNumber}>#{formatPokemonNunber(item.id || 0)}</Text>
+                        <Text style={styles.pokemonName}>{item.name}</Text>
+                      </View>
+                      <View style={styles.pokemonCardContent}>
+                        <Image
+                          source={{ uri: item.imageUrl }}
+                          style={styles.pokemonImage}
+                          accessibilityLabel={item.name}
+                        />
 
-                  </View>
-                </View>
-              </Link>
-            ))}
+                      </View>
+                    </View>
+                  </Link>
+
+                ))}
+              </Fragment>
+            )}
           </View>
         )}
       </ScrollView>
@@ -163,6 +172,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  errorText: {
+    color: "red",
+    fontSize: 16,
+    textAlign: "center",
   },
   header: {
     backgroundColor: '#000',

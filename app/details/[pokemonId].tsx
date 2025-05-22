@@ -6,7 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pokemon, PokemonClient } from "pokenode-ts";
 import { useEffect, useState } from "react";
 import ContentLoader, { Circle, Rect } from "react-content-loader/native";
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Button, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 type TypeEffectiveness = {
   weaknesses: string[];
@@ -22,14 +22,13 @@ export default function DetailsScreen() {
   const [category, setCategory] = useState('');
   const [effectiveness, setEffectiveness] = useState<TypeEffectiveness>({ weaknesses: [], strengths: [] });
 
-
   useEffect(() => {
     const fetchDetails = async () => {
       const api = new PokemonClient();
       const data = await api.getPokemonById(Number(pokemonId));
       setPokemon(data);
       const pokemonSpecies = await api.getPokemonSpeciesById(Number(pokemonId));
-      setDescription(pokemonSpecies.flavor_text_entries[0].flavor_text.replace(/\n/g, ' '));
+      setDescription(pokemonSpecies.flavor_text_entries[0].flavor_text?.replace(/\n/g, ' '));
       setCategory(pokemonSpecies.genera.find((g: any) => g.language.name === 'en')?.genus || "");
 
       const types = data.types.map((t) => t.type.name);
@@ -98,6 +97,7 @@ export default function DetailsScreen() {
             source={{ uri: pokemon.sprites.other?.['official-artwork'].front_default || '' }}
             style={styles.image}
           />
+          <Button title="Play Sound" color="#3b99f5"  />
         </View>
 
         <View style={styles.infoCard}>
