@@ -16,6 +16,7 @@ import { Link } from 'expo-router';
 import ContentLoader, { Rect } from 'react-content-loader/native';
 import { useNetworkState } from 'expo-network';
 const banner = require("../assets/images/banner.jpeg");
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import pokemonLogo from "../assets/images/Pokemon-Logo-PNG.png";
 
 type PokemonDetails = {
@@ -24,6 +25,8 @@ type PokemonDetails = {
   imageUrl: string;
   types?: string[];
 };
+
+const STORAGE_KEY = '@pokemons';
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
@@ -37,31 +40,50 @@ export default function HomeScreen() {
 
 
   useEffect(() => {
-    const fetchPokemons = async () => {
-      try {
-        const data = await api.listPokemonSpecies(0, 33);
-        const results = data.results.map((pokemon, index) => {
-          return {
-            id: index + 1,
-            name: capitalize(pokemon.name),
-            imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${index + 1}.png`,
-          };
-        });
-
-        setPokemonList(results);
-      } catch (error) {
-        console.error('Erro ao buscar Pokémon:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     if (!isConnected) {
       return;
     } else if (pokemonList.length === 0) {
-      fetchPokemons();
+      // fetchPokemons();
+      loadStoredPokemons();
     }
   }, [isConnected]);
+
+  const fetchPokemons = async () => {
+    try {
+      const data = await api.listPokemonSpecies(0, 1333);
+      const results = data.results.map((pokemon, index) => {
+        return {
+          id: index + 1,
+          name: capitalize(pokemon.name),
+          imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${index + 1}.png`,
+        };
+      });
+
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(results));
+      setPokemonList(results);
+      console.log('Pokémons carregados da api!');
+    } catch (error) {
+      console.error('Erro ao buscar Pokémon:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    const loadStoredPokemons = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored !== null) {
+        setPokemonList(JSON.parse(stored));
+        setLoading(false);
+        console.log('Pokémons carregados do AsyncStorage!');
+      } else {
+        await fetchPokemons();
+      }
+    } catch (error) {
+      console.error('Erro ao carregar Pokémons:', error);
+    }
+  };
 
   const formatPokemonNunber = (value: number) => {
     return value.toString().padStart(3, '0');
