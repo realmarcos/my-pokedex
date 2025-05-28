@@ -139,7 +139,7 @@ export default function HomeScreen() {
             ) : (
               <Fragment>
                 {pokemonList.map((item) => (
-                  <Link style={styles.pokemonCard} href={{ pathname: "/details/[pokemonId]", params: { pokemonId: item.id } }} key={item.id} >
+                  <Link style={styles.pokemonCard} href={{ pathname: "/[pokemonId]", params: { pokemonId: item.id } }} key={item.id} >
                     <View key={item.id} accessible accessibilityLabel={`${item.name}`}>
                       <View style={styles.pokemonCardHeader}>
                         <Text style={styles.pokemonNumber}>#{formatPokemonNunber(item.id || 0)}</Text>
