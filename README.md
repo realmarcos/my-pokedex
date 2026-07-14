@@ -1,50 +1,150 @@
-# Welcome to your Expo app 👋
+# My Pokedex
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile criado com Expo + React Native para consultar Pokemons, visualizar detalhes, status base e efetividade de tipos.
 
-## Get started
+## Visao geral
 
-1. Install dependencies
+O projeto utiliza roteamento por arquivos com `expo-router` e duas telas principais:
 
-   ```bash
-   npm install
-   ```
+- `app/index.tsx`: lista de Pokemons com cache local e estado de carregamento.
+- `app/[pokemonId].tsx`: tela de detalhes com descricao, atributos fisicos, tipos, status e counters.
 
-2. Start the app
+## Funcionalidades
 
-   ```bash
-    npx expo start
-   ```
+- Listagem de Pokemons com imagem oficial.
+- Persistencia local com `@react-native-async-storage/async-storage`.
+- Fallback offline: quando possivel, carrega dados do armazenamento local.
+- Skeleton loading com `react-content-loader`.
+- Tela de detalhes com:
+   - descricao e categoria do Pokemon,
+   - altura e peso,
+   - tipos com cor e icone,
+   - barras de status base,
+   - fraquezas e vantagens por tipo.
 
-In the output, you'll find options to open the app in a
+## Stack e bibliotecas principais
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Expo SDK 53
+- React 19 + React Native 0.79
+- TypeScript
+- Expo Router
+- `pokenode-ts` (dados da PokeAPI)
+- AsyncStorage
+- `react-content-loader`
+- `expo-network`
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Estrutura do projeto
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+app/
+   _layout.tsx          # configuracao global de rotas
+   index.tsx            # home/listagem
+   [pokemonId].tsx      # detalhes do pokemon
+components/
+   PokemonStatsCard.tsx
+   utils/
+      getColor.ts
+      typeIcons.tsx
+assets/
+   images/
+   fonts/
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Pre-requisitos
 
-## Learn more
+Antes de instalar, garanta que voce tenha:
 
-To learn more about developing your project with Expo, look at the following resources:
+1. Node.js LTS (recomendado: 18+)
+2. npm (ja vem com o Node)
+3. Expo Go no celular (opcional, para testar rapidamente)
+4. Para emuladores:
+    - Android Studio (Android)
+    - Xcode (iOS, apenas macOS)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Instalacao passo a passo
 
-## Join the community
+1. Clone o repositorio
 
-Join our community of developers creating universal apps.
+```bash
+git clone <url-do-repositorio>
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+2. Entre na pasta do projeto
+
+```bash
+cd my-pokedex
+```
+
+3. Instale as dependencias
+
+```bash
+npm install
+```
+
+4. Inicie o servidor de desenvolvimento
+
+```bash
+npm run start
+```
+
+5. Abra o app
+
+- No celular (Expo Go): escaneie o QR code mostrado no terminal.
+- Android emulador/dispositivo: pressione `a` no terminal ou execute:
+
+```bash
+npm run android
+```
+
+- iOS simulador (macOS): pressione `i` no terminal ou execute:
+
+```bash
+npm run ios
+```
+
+- Web:
+
+```bash
+npm run web
+```
+
+## Scripts disponiveis
+
+- `npm run start`: inicia o Expo.
+- `npm run android`: gera/executa build Android local (`expo run:android`).
+- `npm run ios`: gera/executa build iOS local (`expo run:ios`).
+- `npm run web`: executa no navegador.
+- `npm run test`: executa testes com Jest em modo watch.
+- `npm run lint`: roda lint com configuracao Expo.
+- `npm run reset-project`: script utilitario para resetar estrutura base.
+
+## Build com EAS (opcional)
+
+O projeto possui configuracao em `eas.json` com perfis de build (`preview`, `production`, etc.).
+
+Exemplo de build Android preview:
+
+```bash
+eas build --platform android --profile preview
+```
+
+## Testes
+
+Para rodar os testes:
+
+```bash
+npm run test
+```
+
+Atualmente existe teste de snapshot para componente tematico em `components/__tests__/ThemedText-test.tsx`.
+
+## Observacoes
+
+- O app depende de internet para buscar dados da API na primeira carga.
+- Depois da primeira sincronizacao, a lista pode ser reaproveitada do armazenamento local.
+
+## Referencias
+
+- Expo: https://docs.expo.dev/
+- Expo Router: https://docs.expo.dev/router/introduction/
+- PokeAPI (via pokenode-ts): https://pokeapi.co/
